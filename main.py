@@ -39,6 +39,12 @@ class TransformImage:
         pixels = self.image.getdata()
         return "".join([self.ascii_chars[pixel // 25] for pixel in pixels])
 
+    def format_image(self, new_image_data, *, sep='\n') -> str:
+        pixel_count = len(new_image_data)
+        return sep.join(
+            new_image_data[i:(i + self.new_width)]
+            for i in range(0, pixel_count, self.new_width))
+
     def get_ascii_chars(self, chars: str) -> None:
         self.ascii_chars = [char for char in chars]
 
@@ -51,15 +57,11 @@ def main(path: str, new_width: int) -> None:
         image = TransformImage(path, new_width=new_width)
 
         # convert image to ASCII
-        image.get_ascii_chars("@%#*+=-;:,.")
-        # image.reverse_ascii_chars() if needed
+        image.get_ascii_chars("@%#*+=-;:,.")  # image.reverse_ascii_chars() if needed
         new_image_data = image.get_image_data()
 
         # format
-        pixel_count = len(new_image_data)
-        separator = "\n"
-        ascii_image = separator.join(
-            new_image_data[i:(i + new_width)] for i in range(0, pixel_count, new_width))
+        ascii_image = image.format_image(new_image_data)
 
         # print result
         image.print_ascii_image(ascii_image)
