@@ -1,78 +1,75 @@
 import PIL.Image
 
 
-class ImageToASCII:
-    ASCII_CHARS = ['@', '%', '#', '*', '+', '=', '-', ';', ':', ',', '.']
+class TransformImage:
 
-    def __init__(self, image):
-        self.image = image
+    def __init__(self, path: str, *, new_width: int = 100):
+        self.path = path
+        self.image: PIL.Image = self._open_image()
+        self.new_width = new_width
+        self.ascii_chars: list = []
 
-    def get_image_data(self, new_width: int = 100):
-        """
-        Resizes, converts image and transforms pixels to ascii
-        :param new_width: sets new width for the image
-        :return: resized image
-        """
-        self.image = self.resize_image(new_width)
-        self.image = self.convert_to_gray()
-        self.image = self.pixels_to_ascii()
+    def _open_image(self) -> PIL.Image:
+        return PIL.Image.open(self.path)
+
+    @staticmethod
+    def print_ascii_image(ascii_image: str) -> None:
+        print(ascii_image)
+
+    def save_ascii_image(self, ascii_image: str) -> None:
+        with open(f"{self.path[:-4]}.txt", "w") as f:
+            f.write(ascii_image)
+
+    def get_image_data(self) -> PIL.Image:
+        self.image = self._resize_image()
+        self.image = self._convert_to_gray()
+        self.image = self._pixels_to_ascii()
         return self.image
 
-    def resize_image(self, new_width: int = 100):
-        """
-        Resizes image with a new width and height
-        :param new_width: sets new width for the image
-        :return: resized image
-        """
+    def _resize_image(self) -> PIL.Image:
         width, height = self.image.size
         ratio = height / width
-        new_height = int(new_width * ratio)
-        return self.image.resize((new_width, new_height))
+        new_height = int(self.new_width * ratio)
+        return self.image.resize((self.new_width, new_height))
 
-    def convert_to_gray(self):
-        """
-        Converts image to black and white colors
-        :return: converted image
-        """
+    def _convert_to_gray(self) -> PIL.Image:
         return self.image.convert("L")
 
-    def pixels_to_ascii(self):
-        """
-        Converts RGBA of pixels to ASCII characters
-        :return: image characters
-        """
+    def _pixels_to_ascii(self) -> str:
         pixels = self.image.getdata()
-        return "".join([self.ASCII_CHARS[pixel // 25] for pixel in pixels])
+        return "".join([self.ascii_chars[pixel // 25] for pixel in pixels])
+
+    def get_ascii_chars(self, chars: str) -> None:
+        self.ascii_chars = [char for char in chars]
+
+    def reverse_ascii_chars(self, chars: str | list) -> None:
+        self.ascii_chars = [char for char in reversed(chars)]
 
 
-def main(path, new_width: int = 100):
-    """
-    Starts converting image to ASCII
-    :param path: path to image
-    :param new_width: sets new width for the image
-    :return: None
-    """
+def main(path: str, new_width: int) -> None:
     try:
-        img = PIL.Image.open(path)
-        image = ImageToASCII(img)
+        image = TransformImage(path, new_width=new_width)
 
         # convert image to ASCII
-        new_image_data = image.get_image_data(new_width)
+        image.get_ascii_chars("@%#*+=-;:,.")
+        # image.reverse_ascii_chars() if needed
+        new_image_data = image.get_image_data()
 
         # format
         pixel_count = len(new_image_data)
-        ascii_image = "\n".join(new_image_data[i:(i + new_width)] for i in range(0, pixel_count, new_width))
+        separator = "\n"
+        ascii_image = separator.join(
+            new_image_data[i:(i + new_width)] for i in range(0, pixel_count, new_width))
 
         # print result
-        print(ascii_image)
+        image.print_ascii_image(ascii_image)
 
         # save image to .txt
-        with open(f"{path[:-4]}.txt", "w") as f:
-            f.write(ascii_image)
+        image.save_ascii_image(ascii_image)
 
     except Exception as e:
         print(e)
 
 
 if __name__ == '__main__':
-    main('monkey.jpg', new_width)
+    main('monkey.jpg', new_width=300)
